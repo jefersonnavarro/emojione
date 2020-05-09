@@ -7,7 +7,30 @@ use Emojione\Emojione;
 class EmojioneTest extends \PHPUnit_Framework_TestCase
 {
 
-    private $cacheBustParam = '?v=2.2.5';
+    private $emojiVersion = '4.5';
+
+    public function emojiProvider()
+    {
+        $file = dirname (__FILE__).'/../../../emoji.json';
+
+        $string = file_get_contents($file);
+
+        $json = json_decode($string, true);
+
+        $data = array();
+
+        foreach($json as $emoji)
+        {
+            if(isset($emoji['aliases_ascii']) && is_array($emoji['aliases_ascii'])){
+                foreach($emoji['aliases_ascii'] as $ascii)
+                $data[] = array(
+                    $ascii,
+                    $emoji['shortname']
+                );
+            }
+        }
+        return $data;
+    }
 
     /**
      * test Emojione::toImage()
@@ -17,7 +40,7 @@ class EmojioneTest extends \PHPUnit_Framework_TestCase
     public function testToImage()
     {
         $test     = 'Hello world! 😄 :smile:';
-        $expected = 'Hello world! <img class="emojione" alt="😄" src="//cdn.jsdelivr.net/emojione/assets/png/1f604.png' . $this->cacheBustParam . '"/> <img class="emojione" alt="&#x1f604;" src="//cdn.jsdelivr.net/emojione/assets/png/1f604.png' . $this->cacheBustParam . '"/>';
+        $expected = 'Hello world! <img class="emojione" alt="😄" title=":smile:" src="https://cdn.jsdelivr.net/emojione/assets/' . $this->emojiVersion . '/png/32/1f604.png"/> <img class="emojione" alt="&#x1f604;" title=":smile:" src="https://cdn.jsdelivr.net/emojione/assets/' . $this->emojiVersion . '/png/32/1f604.png"/>';
 
         $this->assertEquals(Emojione::toImage($test), $expected);
     }
@@ -70,7 +93,7 @@ class EmojioneTest extends \PHPUnit_Framework_TestCase
     public function testShortnameToImage()
     {
         $test     = 'Hello world! 😄 :smile:';
-        $expected = 'Hello world! 😄 <img class="emojione" alt="&#x1f604;" src="//cdn.jsdelivr.net/emojione/assets/png/1f604.png' . $this->cacheBustParam . '"/>';
+        $expected = 'Hello world! 😄 <img class="emojione" alt="&#x1f604;" title=":smile:" src="https://cdn.jsdelivr.net/emojione/assets/' . $this->emojiVersion . '/png/32/1f604.png"/>';
 
         $this->assertEquals(Emojione::shortnameToImage($test), $expected);
     }
@@ -87,6 +110,29 @@ class EmojioneTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(Emojione::toShort($test), $expected);
     }
+    /**
+     *
+     * test Emojione::asciiToShortname()
+     *
+     * @return void
+     */
+    public function testAsciiToShortname()
+    {
+        $test     = 'Hello world! :) :D ;) :smile:';
+        $expected = 'Hello world! :slight_smile: :smiley: :wink: :smile:';
+
+        $this->assertEquals(Emojione::asciiToShortname($test), $expected);
+    }
+
+    /**
+     * Test Ascii to shortnames with dataProvider
+     *
+     * @dataProvider emojiProvider
+     */
+    public function testAsciiToShortnameWithDataProvider($ascii, $shortname)
+    {
+        $this->assertEquals($shortname, Emojione::asciiToShortname($ascii));
+    }
 
     /**
      * test Emojione::unicodeToImage()
@@ -96,7 +142,7 @@ class EmojioneTest extends \PHPUnit_Framework_TestCase
     public function testUnicodeToImage()
     {
         $test     = 'Hello world! 😄 :smile:';
-        $expected = 'Hello world! <img class="emojione" alt="😄" src="//cdn.jsdelivr.net/emojione/assets/png/1f604.png' . $this->cacheBustParam . '"/> :smile:';
+        $expected = 'Hello world! <img class="emojione" alt="😄" title=":smile:" src="https://cdn.jsdelivr.net/emojione/assets/' . $this->emojiVersion . '/png/32/1f604.png"/> :smile:';
 
         $this->assertEquals(Emojione::unicodeToImage($test), $expected);
     }
